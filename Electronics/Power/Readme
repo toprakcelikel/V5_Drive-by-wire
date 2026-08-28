@@ -1,0 +1,6 @@
+There were two versions of a power-on board made in 2019. The schematics for the second version have been lost. The board was meant to do a number of things.
+1) Implement a circuit suggested for the Kelly e-bike controller. The controller always receives 36V power and ground from the battery. When the switch is off, power goes though a precharging resistor, but the unit doesn't do anything. When the switch is turned on, a relay removes the resistor and sends a low current 36V signal to a separate line on the charger, which turns it on.
+2) Implement a watchdog timer on am Arduino Nano. If the dog is not petted regularly, the DBW board has stopped working and a second relay will turn off the e-bie controller.
+3) Read the Hall effect sensor from the wheel and compute the speed.
+
+The Arduino Nano functions have been abandoned. The board has been cut down to only implement item (1). 
