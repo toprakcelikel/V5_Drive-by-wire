@@ -5,10 +5,23 @@
 #include "SteeringController.h"
 
 /*-----------------------------------------------------------------------------------*/
-SteeringController::SteeringController()
+SteeringController::SteeringController(Startup startup)
   : steerAngle_DegX10(0), SteerControl(0), desiredTurn_DegX10(0),
     steerPID(&steerAngle_DegX10, &SteerControl, &desiredTurn_DegX10,
              proportional_steering, integral_steering, derivative_steering, DIRECT) {
+  if (startup == Startup::Diagnostic) {
+    analogWrite(STEER_SPEED_PIN, 0);
+    digitalWrite(STEER_ON_PIN, ST_OFF);
+    digitalWrite(STEER_PULSE_PIN, LOW);
+    digitalWrite(LEFT_TURN_PIN, LOW);
+    pinMode(STEER_SPEED_PIN, OUTPUT);
+    pinMode(STEER_ON_PIN, OUTPUT);
+    pinMode(STEER_DIR_PIN, OUTPUT);
+    pinMode(STEER_PULSE_PIN, OUTPUT);
+    pinMode(LEFT_TURN_PIN, OUTPUT);
+    stopTest();
+    return;
+  }
 switch (STEER_METHOD)
 {
 case STR_HBRIDGE:
@@ -115,15 +128,13 @@ void SteeringController::SteeringPID(int input_DegX10) {
    // and digitalWrite(pin, 0xFF) is just HIGH - full speed with no way to do
    // anything else, which made the "slow down for small err" note below
    // impossible to act on. 255 is the same full speed, but now scalable.
-   analogWrite(STEER_SPEED_PIN, 255);  // max speed. May want to slow down for small err
    // To do: read motor current on A0 and redeuce speed if too much power.
    // NOTE: this writes the raw bool, so turning right drives the pin HIGH -
    // which contradicts ST_RIGHT (= !ST_LEFT = LOW) in DBW_Pins.h. One of the
    // two is wrong. Left as-is deliberately: picking a side without a meter on
    // the motor controller could send the steering the wrong way. Verify on
    // hardware before running STR_MOTOR_CONTROL, then use ST_LEFT/ST_RIGHT here.
-   digitalWrite(STEER_DIR_PIN, turnRight);
-   digitalWrite(STEER_ON_PIN, ST_ON);  // move
+  driveMotor(255, turnRight);
   }
 #elif (STEER_METHOD == STR_HBRIDGE)
   digitalWrite(LEFT_TURN_PIN,  turnLeft  ? HIGH : LOW);
@@ -152,7 +163,7 @@ void SteeringController::SteeringPID(int input_DegX10) {
 /*-----------------------------------------------------------------------------------*/
 // Get data from sensor on left steering column.
 int SteeringController::computeAngleLeft() {
-  int val = analogRead(L_SENSE_PIN);
+  int val = readLeftSensorRaw();
   int degreeX10;
   if (val == Left_Straight_Read) 
      {  currentAngle_DegX10 = 0; return 0;}
@@ -200,6 +211,40 @@ int SteeringController::computeAngleRight() {
 int SteeringController::getSteeringMode() {
   return steeringMode;
 }
+
+int SteeringController::readLeftSensorRaw() const {
+  return analogRead(L_SENSE_PIN);
+}
+
+void SteeringController::driveMotor(uint8_t pwm, uint8_t direction) {
+  analogWrite(STEER_SPEED_PIN, pwm);
+  digitalWrite(STEER_DIR_PIN, direction);
+  digitalWrite(STEER_ON_PIN, ST_ON);
+}
+
+void SteeringController::testMotor(bool turnLeft, uint8_t pwm) {
+  stopTest();
+  driveMotor(pwm, turnLeft ? ST_LEFT : ST_RIGHT);
+}
+
+bool SteeringController::testPulse(uint16_t width_us) {
+  if (width_us < MIN_LEFT_US || width_us > MAX_RIGHT_US) return false;
+  stopTest();
+  Steer_Servo.attach(STEER_PULSE_PIN, MIN_LEFT_US, MAX_RIGHT_US);
+  Steer_Servo.writeMicroseconds(width_us);
+  currentSteering_us = width_us;
+  return true;
+}
+
+void SteeringController::stopTest() {
+  analogWrite(STEER_SPEED_PIN, 0);
+  digitalWrite(STEER_ON_PIN, ST_OFF);
+  if (Steer_Servo.attached()) Steer_Servo.detach();
+  digitalWrite(STEER_PULSE_PIN, LOW);
+  digitalWrite(LEFT_TURN_PIN, LOW);
+  currentSteering_us = 0;
+}
+
 /*-----------------------------------------------------------------------------------*/
 // Move the wheels to center, then left, right, center.
 // Use left sensor for feedback.

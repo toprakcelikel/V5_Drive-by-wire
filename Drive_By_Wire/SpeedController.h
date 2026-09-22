@@ -1,4 +1,5 @@
 #pragma once
+#include "DBW_Pins.h"
 #include "Settings.h"
 #include <SPI.h>
 #include "PID.h"
@@ -25,7 +26,7 @@ class SpeedController {
 private:
   int32_t currentThrottle = 0;
   float speedCyclometer_cmPs = 0;
-  float PIDThrottle;
+  float PIDThrottle = 0;
   float desiredSpeed_cmPs = 0;
   PID speedPID;
 
@@ -37,6 +38,7 @@ private:
   int32_t prevSpeed_cmPs;
 
   void ThrottlePID(int32_t desiredValue);
+  void writeThrottle(int32_t value);
   int32_t extrapolateSpeed();
   void computeSpeed();
   static void tick();
@@ -45,7 +47,8 @@ private:
                     BR_LO_VOLTS } state;
   volatile uint32_t brake_change_ms;
 public:
-  SpeedController();
+  enum class Startup { Normal, Diagnostic };
+  explicit SpeedController(Startup startup = Startup::Normal);
   ~SpeedController();
   // Speed measured from the odometer/cyclometer ticks, cm/s. This is the real
   // wheel speed. Note update() returns currentThrottle (a DAC value), NOT this.
@@ -54,6 +57,10 @@ public:
   // returns currentThrottle
   int32_t update(int32_t dSpeed, DriveMode mode);
   void ReleaseBrakes();
+  void serviceBrakes();
+  bool brakesApplied() const { return state != BR_OFF; }
+  bool brakeBoostActive() const { return state == BR_HI_VOLTS; }
+  bool testThrottle(uint8_t value);
   void test();
  };
 //_______________Brakes___________________________

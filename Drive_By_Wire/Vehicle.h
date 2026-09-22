@@ -1,5 +1,6 @@
 #pragma once
 
+#include "FirmwareMode.h"
 #include "SpeedController.h"
 #include "SteeringController.h"
 #include "RC_Controller.h"
@@ -15,15 +16,43 @@ extern tmElements_t tm;
 class Vehicle {
 public:
   friend class Logger;
-  Vehicle();
+  enum class Startup { Normal, Diagnostic };
+  explicit Vehicle(Startup startup = Startup::Normal);
   ~Vehicle();
   void update();
+  void test();
+#if DBW_SERIAL_TEST_MODE
+  void testCommand(char command, long value, bool hasValue);
+#endif
   void updateRC();
 
   bool sendCan();
   void receiveCan();
 
 private:
+  Startup startupMode;
+#if DBW_SERIAL_TEST_MODE
+  struct DiagnosticState {
+    char mode = 0;
+    bool estopped = true;
+    bool physicalStop = false;
+    bool steeringActive = false;
+    bool throttleActive = false;
+    bool ledActive = false;
+    bool rcActive = false;
+    uint8_t steeringPwm = 50;
+    uint8_t ledColor = 0;
+    uint32_t steerStarted = 0, steerDuration = 0;
+    uint32_t outputStarted = 0, ledStarted = 0, rcReported = 0;
+  } diagnostic;
+  void beginTests();
+  void setTestColor(uint8_t color);
+  void stopTestMotion();
+  void applyTestBrakes();
+  void emergencyTestStop();
+  void applyTestValue(char command, long value);
+  void serviceTestOutputs();
+#endif
   static RC_Controller* RC;
   static SpeedController* throttle;
   static SteeringController* steer;

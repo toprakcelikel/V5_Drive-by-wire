@@ -4,26 +4,31 @@
 
 volatile uint32_t SpeedController::tickTime_ms[2];
 
-SpeedController::SpeedController()
+SpeedController::SpeedController(Startup startup)
   : speedPID(&speedCyclometer_cmPs, &PIDThrottle, &desiredSpeed_cmPs, proportional_throttle, integral_throttle, derivative_throttle, DIRECT) 
 {
    // Initialize Pins
+  if (startup == Startup::Diagnostic) {
+    digitalWrite(BRAKE_ON_PIN, ON_BR);
+    digitalWrite(BRAKE_VOLT_PIN, ON_BR);
+  }
   pinMode(BRAKE_ON_PIN, OUTPUT);
   pinMode(BRAKE_VOLT_PIN, OUTPUT);
   // Brakes are released as a default setting
   state = BR_OFF;
-  ReleaseBrakes(); 
   brake_change_ms = 0;  // only used when brakes on
+  if (startup == Startup::Diagnostic) Stop();
+  else ReleaseBrakes();
   
   currentThrottle = 0;
   speedPID.SetControlLimits(MIN_PID_TH, MAX_PID_TH);
   speedPID.SetSampleTime(PID_SAMPLE_TIME);
-  speedPID.SetMode(AUTOMATIC);
+  speedPID.SetMode(startup == Startup::Normal ? AUTOMATIC : MANUAL);
   calcTime_ms[0] = 0;
   calcTime_ms[1] = 0;
   prevSpeed_cmPs = 0;
 
-  attachInterrupt(IRPT_WHEEL, tick, RISING);
+  if (startup == Startup::Normal) attachInterrupt(IRPT_WHEEL, tick, RISING);
   if (DEBUG)
     Serial.println("Speed Setup Complete");
 }
@@ -49,11 +54,7 @@ void SpeedController::tick() {
  * param dSpeed desired speed in mm/s
  */
 int32_t SpeedController::update(int32_t dSpeed, DriveMode mode) {
-  if (state == BR_HI_VOLTS && millis() > brake_change_ms)
-  {
-    digitalWrite(BRAKE_VOLT_PIN, OFF_BR);   // Use 12V activation
-    state = BR_LO_VOLTS;
-  }
+  serviceBrakes();
 
   // If Nav (or the operator path) commands zero speed, bypass the PID and
   // brake hard. The PID's integral accumulates a positive bias during the
@@ -115,7 +116,25 @@ void SpeedController::ThrottlePID(int32_t desiredValue) {
       currentThrottle = MAP(PIDThrottle,PID_COAST,MAX_PID_TH,MIN_THROTTLE,MAX_THROTTLE);
       ReleaseBrakes();
     }
-   analogWrite(DAC0,currentThrottle);
+   writeThrottle(currentThrottle);
+}
+
+void SpeedController::writeThrottle(int32_t value) {
+  currentThrottle = value;
+  analogWrite(DAC0, currentThrottle);
+}
+
+bool SpeedController::testThrottle(uint8_t value) {
+  if (value > 0 && brakesApplied()) return false;
+  writeThrottle(value);
+  return true;
+}
+
+void SpeedController::serviceBrakes() {
+  if (state == BR_HI_VOLTS && (int32_t)(millis() - brake_change_ms) >= 0) {
+    digitalWrite(BRAKE_VOLT_PIN, OFF_BR);
+    state = BR_LO_VOLTS;
+  }
 }
 
 int32_t SpeedController::extrapolateSpeed() {
@@ -188,8 +207,7 @@ void SpeedController::ReleaseBrakes() {
     */
 void SpeedController::Stop() {
  // set the throttle signal to zero
-  analogWrite(DAC0, 0);
-  currentThrottle = 0;
+  writeThrottle(0);
   if (state == BR_OFF)
   {  // first time to apply brakes
     digitalWrite(BRAKE_VOLT_PIN, ON_BR);   // Use 24V activation
@@ -197,11 +215,7 @@ void SpeedController::Stop() {
     brake_change_ms = millis() + MAXHI_MS; 
     state = BR_HI_VOLTS;  
   }
-  else if (state == BR_HI_VOLTS && millis() > brake_change_ms)
-  {
-    digitalWrite(BRAKE_VOLT_PIN, OFF_BR);   // Use 12V activation  
-    state = BR_LO_VOLTS;
-  }
+  serviceBrakes();
 }
 //___________________________________________________________________________
 void SpeedController::test() {
@@ -224,20 +238,20 @@ void SpeedController::test() {
   // ramp up throttle with brakes on
   for (i = 50; i < 250; i++)
   {
-    analogWrite(DAC0, i);
+    writeThrottle(i);
     delay(15);
   }
-  analogWrite(DAC0, 0);   // stop
+  writeThrottle(0);   // stop
   delay(1000);            // wait for motor to stop
   digitalWrite(BRAKE_ON_PIN, OFF_BR);     // release brakes
 // move the trike
   for (i = 50; i < 150; i++)
   {
-    analogWrite(DAC0, i);
+    writeThrottle(i);
     delay(15);
   } 
 // stop and apply brakes
-  analogWrite(DAC0,0); 
+  writeThrottle(0);
   digitalWrite(BRAKE_VOLT_PIN, ON_BR);   // Use 24V activation
   digitalWrite(BRAKE_ON_PIN, ON_BR);// Apply brakes
   delay(800);

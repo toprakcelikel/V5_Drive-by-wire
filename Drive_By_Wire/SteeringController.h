@@ -31,10 +31,11 @@ private:
 
   // Private methods
   void SteeringPID(int input);
-   int computeAngleLeft();
+  void driveMotor(uint8_t pwm, uint8_t direction);
 
 public:
-  SteeringController();
+  enum class Startup { Normal, Diagnostic };
+  explicit SteeringController(Startup startup = Startup::Normal);
   ~SteeringController();
 
   // Main update method.
@@ -48,6 +49,12 @@ public:
 
   // Optional use of right sensor (if supported)
   int computeAngleRight();
+  int computeAngleLeft();
+  int readLeftSensorRaw() const;
+  void testMotor(bool turnLeft, uint8_t pwm);
+  bool testPulse(uint16_t width_us);
+  void stopTest();
+  bool pulseTestActive() { return Steer_Servo.attached(); }
   void test();
 };
 

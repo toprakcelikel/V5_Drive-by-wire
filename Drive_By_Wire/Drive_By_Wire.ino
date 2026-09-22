@@ -4,14 +4,20 @@
  *  Accept commands over CAN bus
  */
 #include "DBW_Pins.h"
-#include "Vehicle.h"
+#include "FirmwareMode.h"
 #include <Arduino.h>
+#include "Vehicle.h"
 
-#define baud 115200  // baudrate for debugging with a host PC over USB serial
 Vehicle *myTrike;
+#if !DBW_SERIAL_TEST_MODE
+#define baud 115200  // baudrate for debugging with a host PC over USB serial
 Logger *Log;
+#endif
 
 void setup() {
+#if DBW_SERIAL_TEST_MODE
+  myTrike = new Vehicle(Vehicle::Startup::Diagnostic);
+#else
   pinMode (RED_LED_PIN, OUTPUT);
   pinMode (GREEN_LED_PIN, OUTPUT);
   pinMode (BLUE_LED_PIN, OUTPUT);
@@ -35,9 +41,13 @@ void setup() {
 #endif
   myTrike = new Vehicle();
   Log = new Logger();
+#endif
 }
 
 void loop() {
+#if DBW_SERIAL_TEST_MODE
+  myTrike->update();
+#else
    //Timing code
   const uint32_t offsetTime = 7;  // logged delays are 107 ms or more.
   uint32_t endTime;
@@ -65,5 +75,5 @@ void loop() {
   while (millis() < spinUntil) {
     myTrike->receiveCan();
   }
-
+#endif
 }
