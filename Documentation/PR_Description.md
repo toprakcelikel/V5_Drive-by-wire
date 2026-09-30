@@ -14,8 +14,8 @@ automatically checks the LED, brake, and steering serial responses.
 
 Start with a **bare Due powered by USB only**, without a motor shield or actuators.
 
-1. Open [Drive_By_Wire/Drive_By_Wire.ino](../Drive_By_Wire/Drive_By_Wire.ino) in Arduino IDE.
-2. Temporarily set `DBW_SERIAL_TEST_MODE` to `1` in [Drive_By_Wire/FirmwareMode.h](../Drive_By_Wire/FirmwareMode.h).
+1. Open [Drive_By_Wire/Drive_By_Wire.ino](https://github.com/toprakcelikel/V5_Drive-by-wire/blob/feature/dbw-diagnostics-review/Drive_By_Wire/Drive_By_Wire.ino) in Arduino IDE.
+2. Temporarily set `DBW_SERIAL_TEST_MODE` to `1` in [Drive_By_Wire/FirmwareMode.h](https://github.com/toprakcelikel/V5_Drive-by-wire/blob/feature/dbw-diagnostics-review/Drive_By_Wire/FirmwareMode.h).
 3. Select **Arduino Due (Programming Port)** and the board's port, then upload.
 4. Restore the source setting to `0` before submitting changes. Do not upload again
    if continuing diagnostics; editing the source does not change the running Due.
@@ -47,7 +47,7 @@ The steering example above is for the bare board, not an initial real-motor test
 The screenshot shows the manual sequence `E`, `L`, `E`, `R`, `B`, `E`, `V 100`,
 `S -200`, `E`, with each command sent separately after the preceding response.
 
-![Arduino Serial Monitor showing the manual LED, brake, steering, and E-stop tests](Serial_Monitor_Demo.png)
+![Arduino Serial Monitor showing the manual LED, brake, steering, and E-stop tests](https://raw.githubusercontent.com/toprakcelikel/V5_Drive-by-wire/feature/dbw-diagnostics-review/Documentation/Serial_Monitor_Demo.png)
 
 The LED cycle completes, the brakes report release then boost/hold, and steering
 reports a stop followed by the final E-stop acknowledgement. These are firmware
@@ -174,4 +174,4 @@ behavior before motor testing; DAC code zero is not zero volts.
 Record observations and measurements separately from the automated serial PASS
 results. Restore the source setting to `0` before submission; returning the Due
 to normal operation requires a deliberate upload of the normal build. For the
-full setup, precautions, and limits, see [Serial_Test_Mode.md](Serial_Test_Mode.md).
+full setup, precautions, and limits, see [Serial_Test_Mode.md](https://github.com/toprakcelikel/V5_Drive-by-wire/blob/feature/dbw-diagnostics-review/Documentation/Serial_Test_Mode.md).
