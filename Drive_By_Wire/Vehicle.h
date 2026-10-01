@@ -1,6 +1,6 @@
 #pragma once
 
-#include "FirmwareMode.h"
+#include "src/tests/FirmwareMode.h"
 #include "SpeedController.h"
 #include "SteeringController.h"
 #include "RC_Controller.h"

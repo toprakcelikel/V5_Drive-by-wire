@@ -1,5 +1,5 @@
 #pragma once
-#include "FirmwareMode.h"
+#include "src/tests/FirmwareMode.h"
 #include "Settings.h"
 #include <SPI.h>
 #include "PID.h"

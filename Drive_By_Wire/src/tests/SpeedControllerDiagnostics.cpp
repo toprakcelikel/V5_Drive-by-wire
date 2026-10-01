@@ -3,8 +3,8 @@
 #if DBW_SERIAL_TEST_MODE
 
 #include <Arduino.h>
-#include "DBW_Pins.h"
-#include "SpeedController.h"
+#include "../../DBW_Pins.h"
+#include "../../SpeedController.h"
 
 SpeedController::SpeedController(Startup)
   : PIDThrottle(0),

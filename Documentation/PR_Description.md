@@ -15,7 +15,8 @@ automatically checks the LED, brake, and steering serial responses.
 Start with a **bare Due powered by USB only**, without a motor shield or actuators.
 
 1. Open [Drive_By_Wire/Drive_By_Wire.ino](https://github.com/toprakcelikel/V5_Drive-by-wire/blob/feature/dbw-diagnostics-review/Drive_By_Wire/Drive_By_Wire.ino) in Arduino IDE.
-2. Temporarily set `DBW_SERIAL_TEST_MODE` to `1` in [Drive_By_Wire/FirmwareMode.h](https://github.com/toprakcelikel/V5_Drive-by-wire/blob/feature/dbw-diagnostics-review/Drive_By_Wire/FirmwareMode.h).
+2. In VS Code or another text editor, temporarily set `DBW_SERIAL_TEST_MODE` to `1`
+   in [Drive_By_Wire/src/tests/FirmwareMode.h](https://github.com/toprakcelikel/V5_Drive-by-wire/blob/feature/dbw-diagnostics-review/Drive_By_Wire/src/tests/FirmwareMode.h) and save. Arduino compiles `src/tests` automatically, but its files do not appear as sketch tabs.
 3. Select **Arduino Due (Programming Port)** and the board's port, then upload.
 4. Restore the source setting to `0` before submitting changes. Do not upload again
    if continuing diagnostics; editing the source does not change the running Due.

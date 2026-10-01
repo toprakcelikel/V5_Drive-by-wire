@@ -1,6 +1,6 @@
 #pragma once
 
-#include "FirmwareMode.h"
+#include "src/tests/FirmwareMode.h"
 #include <Servo.h>
 #include "PID.h"
 

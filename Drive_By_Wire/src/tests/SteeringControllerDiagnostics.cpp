@@ -3,9 +3,9 @@
 #if DBW_SERIAL_TEST_MODE
 
 #include <Arduino.h>
-#include "DBW_Pins.h"
-#include "Settings.h"
-#include "SteeringController.h"
+#include "../../DBW_Pins.h"
+#include "../../Settings.h"
+#include "../../SteeringController.h"
 
 SteeringController::SteeringController(Startup)
   : steerAngle_DegX10(0), SteerControl(0), desiredTurn_DegX10(0),

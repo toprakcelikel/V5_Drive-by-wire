@@ -6,7 +6,7 @@
 #include "DBW_Pins.h"
 #include "Vehicle.h"
 #include <Arduino.h>
-#include "FirmwareMode.h"
+#include "src/tests/FirmwareMode.h"
 
 #define baud 115200  // baudrate for debugging with a host PC over USB serial
 Vehicle *myTrike;

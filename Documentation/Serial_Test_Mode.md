@@ -9,17 +9,24 @@ Arduino sketch is needed.
 
 `Drive_By_Wire/Vehicle.cpp` retains its original constructor and driving methods,
 with only test-mode-guarded dispatch/isolation checks added. Diagnostic constructors
-and helpers live in separate source files, compiled only when
+and helpers live in `Drive_By_Wire/src/tests/`, compiled only when
 `DBW_SERIAL_TEST_MODE=1`; the setting must apply to all translation units.
+
+Arduino compiles the sketch's `src` directory recursively, so these files are
+included automatically when building the original sketch in the IDE. Moving them
+to the repository-level `tests/` directory would require extra build integration.
+The host mocks and PowerShell runners remain in `tests/serial_test_mode/`; they
+must not be compiled into the Due firmware.
 
 | File | Responsibility |
 | --- | --- |
 | Vehicle.cpp / Vehicle.h | Original Vehicle implementation plus guarded test declarations and RC/CAN isolation checks |
-| VehicleTestMode.cpp | Diagnostic Vehicle constructor and forwarding test methods |
-| VehicleDiagnostics.cpp / VehicleDiagnostics.h | Command actions, limits, timers, E-stop state, LEDs, and raw RC capture |
-| SerialTestMode.cpp / SerialTestMode.h | Parse serial input and queue responses; no controller construction or direct actuator operations |
+| src/tests/FirmwareMode.h | Normal versus diagnostic build selection, default 0 |
+| src/tests/VehicleTestMode.cpp | Diagnostic Vehicle constructor and forwarding test methods |
+| src/tests/VehicleDiagnostics.cpp / src/tests/VehicleDiagnostics.h | Command actions, limits, timers, E-stop state, LEDs, and raw RC capture |
+| src/tests/SerialTestMode.cpp / src/tests/SerialTestMode.h | Parse serial input and queue responses; no controller construction or direct actuator operations |
 | SpeedController.cpp / SteeringController.cpp | Unchanged upstream implementations, including constructors, normal control, and original test() sequences |
-| SpeedControllerDiagnostics.cpp / SteeringControllerDiagnostics.cpp | Additional test-only constructor overloads and manual actuator helpers, declared behind the mode flag in controller headers |
+| src/tests/SpeedControllerDiagnostics.cpp / src/tests/SteeringControllerDiagnostics.cpp | Additional test-only constructor overloads and manual actuator helpers, declared behind the mode flag in controller headers |
 | DBW_Pins.h / Settings.h | Shared hardware pin definitions, polarity, limits, and calibration |
 
 ## Vehicle-owned tests
@@ -95,14 +102,14 @@ fixed in this feature. Diagnostic startup initializes its own PIDThrottle to zer
 the original normal-mode issue is deliberately deferred to a separate review.
 
 For code review, start with the guarded additions in Vehicle.cpp and the three
-headers, then inspect VehicleTestMode.cpp and the two controller diagnostic files.
+headers, then inspect src/tests/VehicleTestMode.cpp and the two controller diagnostic files.
 The sketch retains only compile-time selection of normal versus diagnostic startup
 and loop. This limits production changes but does not replace electrical or trike
 validation.
 
 ## Select a mode
 
-Set `DBW_SERIAL_TEST_MODE` in `Drive_By_Wire/FirmwareMode.h`:
+Set `DBW_SERIAL_TEST_MODE` in `Drive_By_Wire/src/tests/FirmwareMode.h`:
 
 - `0` (default): normal DBW firmware, including its existing startup tests.
 - `1`: diagnostic Vehicle construction. No Logger, CAN arbitration, controller PID
@@ -133,9 +140,10 @@ steering selection is a compile check, not confirmation of the trike's hardware.
 
 On this machine, no extra compiler flags are needed for the diagnostic build:
 
-1. Open `Drive_By_Wire/Drive_By_Wire.ino` and temporarily change the FirmwareMode.h
-    tab from `#define DBW_SERIAL_TEST_MODE 0` to `#define DBW_SERIAL_TEST_MODE 1`.
-    Reopen the sketch if the IDE shows older content.
+1. Open `Drive_By_Wire/Drive_By_Wire.ino` in Arduino IDE. In VS Code or another
+    text editor, open `Drive_By_Wire/src/tests/FirmwareMode.h`, temporarily change
+    `#define DBW_SERIAL_TEST_MODE 0` to `#define DBW_SERIAL_TEST_MODE 1`, and save.
+    Files under `src` are compiled automatically but do not appear as IDE sketch tabs.
 2. Select Arduino Due (Programming Port) and the current port (COM5 for this bench).
 3. Keep the board powered by USB only, without a motor shield or actuators attached.
     Close Serial Monitor, then click Upload; the IDE compiles before uploading.

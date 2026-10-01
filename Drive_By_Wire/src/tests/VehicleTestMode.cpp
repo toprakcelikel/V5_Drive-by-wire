@@ -3,8 +3,8 @@
 #if DBW_SERIAL_TEST_MODE
 
 #include <Arduino.h>
-#include "DBW_Pins.h"
-#include "Vehicle.h"
+#include "../../DBW_Pins.h"
+#include "../../Vehicle.h"
 #include "SerialTestMode.h"
 #include "VehicleDiagnostics.h"
 

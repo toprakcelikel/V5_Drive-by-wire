@@ -2,10 +2,10 @@
 
 #if DBW_SERIAL_TEST_MODE
 
-#include "DBW_Pins.h"
-#include "Settings.h"
-#include "SpeedController.h"
-#include "SteeringController.h"
+#include "../../DBW_Pins.h"
+#include "../../Settings.h"
+#include "../../SpeedController.h"
+#include "../../SteeringController.h"
 #include "SerialTestMode.h"
 #include <string.h>
 
